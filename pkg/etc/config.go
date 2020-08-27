@@ -16,11 +16,11 @@ import (
 )
 
 type Config struct {
-	API        APIConfig
-	TLS        TLSConfig
-	Clair      ClairConfig
-	RedisPool  RedisPool
-	RedisStore RedisStore
+	API         APIConfig
+	TLS         TLSConfig
+	Clair       ClairConfig
+	RedisClient RedisClient
+	RedisStore  RedisStore
 }
 
 type APIConfig struct {
@@ -48,14 +48,13 @@ type ClairConfig struct {
 	DatabaseURL string `env:"SCANNER_CLAIR_DATABASE_URL"`
 }
 
-type RedisPool struct {
-	URL               string        `env:"SCANNER_STORE_REDIS_URL" envDefault:"redis://harbor-harbor-redis:6379"`
-	MaxActive         int           `env:"SCANNER_STORE_REDIS_POOL_MAX_ACTIVE" envDefault:"5"`
-	MaxIdle           int           `env:"SCANNER_STORE_REDIS_POOL_MAX_IDLE" envDefault:"5"`
-	IdleTimeout       time.Duration `env:"SCANNER_STORE_REDIS_POOL_IDLE_TIMEOUT" envDefault:"5m"`
-	ConnectionTimeout time.Duration `env:"SCANNER_STORE_REDIS_POOL_CONNECTION_TIMEOUT" envDefault:"1s"`
-	ReadTimeout       time.Duration `env:"SCANNER_STORE_REDIS_POOL_READ_TIMEOUT" envDefault:"1s"`
-	WriteTimeout      time.Duration `env:"SCANNER_STORE_REDIS_POOL_WRITE_TIMEOUT" envDefault:"1s"`
+type RedisClient struct {
+	URL                string        `env:"SCANNER_STORE_REDIS_URL" envDefault:"redis://harbor-harbor-redis:6379"`
+	IdleTimeout        time.Duration `env:"SCANNER_STORE_REDIS_POOL_IDLE_TIMEOUT" envDefault:"5m"`
+	ConnectionTimeout  time.Duration `env:"SCANNER_STORE_REDIS_POOL_CONNECTION_TIMEOUT" envDefault:"1s"`
+	MaxRetries         int           `env:"SCANNER_STORE_REDIS_MAX_RETRIES" envDefault:"3"`
+	MaxConnAge         time.Duration `env:"SCANNER_STORE_REDIS_MAX_CONNECTION_AGE" envDefault:"60s"`
+	IdleCheckFrequency time.Duration `env:"SCANNER_STORE_REDIS_IDLE_CHECK_FREQUENCY" envDefault:"20s"`
 }
 
 type RedisStore struct {

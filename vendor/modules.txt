@@ -1,5 +1,3 @@
-# github.com/FZambia/sentinel v1.1.0
-github.com/FZambia/sentinel
 # github.com/Microsoft/go-winio v0.4.11
 github.com/Microsoft/go-winio
 # github.com/Microsoft/hcsshim v0.8.6
@@ -59,6 +57,14 @@ github.com/docker/go-connections/sockets
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.3.3
 github.com/docker/go-units
+# github.com/go-redis/redis/v7 v7.4.0
+github.com/go-redis/redis/v7
+github.com/go-redis/redis/v7/internal
+github.com/go-redis/redis/v7/internal/consistenthash
+github.com/go-redis/redis/v7/internal/hashtag
+github.com/go-redis/redis/v7/internal/pool
+github.com/go-redis/redis/v7/internal/proto
+github.com/go-redis/redis/v7/internal/util
 # github.com/gogo/protobuf v1.2.0
 github.com/gogo/protobuf/proto
 # github.com/golang/protobuf v1.3.2
@@ -67,9 +73,6 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/gomodule/redigo v2.0.0+incompatible
-github.com/gomodule/redigo/internal
-github.com/gomodule/redigo/redis
 # github.com/google/uuid v1.1.1
 github.com/google/uuid
 # github.com/gorilla/mux v1.7.2
@@ -123,7 +126,7 @@ github.com/testcontainers/testcontainers-go
 github.com/testcontainers/testcontainers-go/wait
 # github.com/xo/dburl v0.0.0-20191005012637-293c3298d6c0
 github.com/xo/dburl
-# golang.org/x/net v0.0.0-20190613194153-d28f0bde5980
+# golang.org/x/net v0.0.0-20190923162816-aa69164e4478
 golang.org/x/net/internal/socks
 golang.org/x/net/proxy
 # golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4

@@ -1,17 +1,14 @@
 package redisx
 
 import (
-	"errors"
 	"fmt"
+	"github.com/go-redis/redis/v7"
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/goharbor/harbor-scanner-clair/pkg/etc"
 
-	"github.com/FZambia/sentinel"
-	"github.com/gomodule/redigo/redis"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -21,7 +18,7 @@ import (
 // run in standalone and Sentinel modes:
 // - redis://user:password@standalone_host:port/db-number
 // - redis+sentinel://user:password@sentinel_host1:port1,sentinel_host2:port2/monitor-name/db-number
-func NewPool(config etc.RedisPool) (*redis.Pool, error) {
+func NewPool(config etc.RedisClient) (*redis.Client, error) {
 	configURL, err := url.Parse(config.URL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid redis URL: %s", err)
@@ -29,37 +26,46 @@ func NewPool(config etc.RedisPool) (*redis.Pool, error) {
 
 	switch configURL.Scheme {
 	case "redis":
-		return newInstancePool(config), nil
-	case "redis+sentinel":
-		return newSentinelPool(configURL, config)
+		return newInstancePool(config)
+	//case "redis+sentinel":
+	//	return newSentinelPool(configURL, config)
 	default:
 		return nil, fmt.Errorf("invalid redis URL scheme: %s", configURL.Scheme)
 	}
 }
 
 // redis://user:password@standalone_host:port/db-number
-func newInstancePool(config etc.RedisPool) *redis.Pool {
+func newInstancePool(config etc.RedisClient) (*redis.Client, error) {
 	log.Trace("Constructing connection pool for Redis instance")
-	return &redis.Pool{
-		Dial: func() (redis.Conn, error) {
-			log.WithField("url", config.URL).Trace("Connecting to Redis")
-			return redis.DialURL(config.URL)
-		},
-		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			if time.Since(t) < time.Minute {
-				return nil
-			}
-			log.Trace("Testing connection to Redis on borrow")
-			_, err := c.Do("PING")
-			return err
-		},
-		MaxIdle:     config.MaxIdle,
-		MaxActive:   config.MaxActive,
-		IdleTimeout: config.IdleTimeout,
-		Wait:        true,
+	configURL, err := url.Parse(config.URL)
+	if err != nil {
+		return nil, err
 	}
+	pass, _ := configURL.User.Password()
+
+	trimmedPath := strings.TrimLeft(configURL.Path, "/")
+	dbNum := 0
+	if trimmedPath != "" {
+		dbNum, err = strconv.Atoi(trimmedPath)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return redis.NewClient(&redis.Options{
+		Addr:               configURL.Hostname() + ":" + configURL.Port(),
+		Username:           configURL.User.Username(),
+		Password:           pass,
+		DB:                 dbNum,
+		MaxRetries:         config.MaxRetries,
+		DialTimeout:        config.ConnectionTimeout,
+		MaxConnAge:         config.MaxConnAge,
+		IdleTimeout:        config.IdleTimeout,
+		IdleCheckFrequency: config.IdleCheckFrequency,
+	}), nil
 }
 
+/*
 // redis+sentinel://user:password@sentinel_host1:port1,sentinel_host2:port2/monitor-name/db-number
 func newSentinelPool(configURL *url.URL, config etc.RedisPool) (pool *redis.Pool, err error) {
 	log.Trace("Constructing connection pool for Redis Sentinel")
@@ -155,3 +161,5 @@ func ParseSentinelURL(configURL *url.URL) (sentinelURL SentinelURL, err error) {
 
 	return
 }
+
+*/

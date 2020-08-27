@@ -71,14 +71,13 @@ func TestGetConfig(t *testing.T) {
 					Namespace:  "harbor.scanner.clair:store",
 					ScanJobTTL: parseDuration(t, "1h"),
 				},
-				RedisPool: RedisPool{
-					URL:               "redis://harbor-harbor-redis:6379",
-					MaxActive:         5,
-					MaxIdle:           5,
-					IdleTimeout:       parseDuration(t, "5m"),
-					ConnectionTimeout: parseDuration(t, "1s"),
-					ReadTimeout:       parseDuration(t, "1s"),
-					WriteTimeout:      parseDuration(t, "1s"),
+				RedisClient: RedisClient{
+					URL:                "redis://harbor-harbor-redis:6379",
+					IdleTimeout:        parseDuration(t, "5m"),
+					ConnectionTimeout:  parseDuration(t, "1s"),
+					MaxRetries:         3,
+					MaxConnAge:         parseDuration(t, "60s"),
+					IdleCheckFrequency: parseDuration(t, "20s"),
 				},
 			},
 		},
@@ -119,14 +118,13 @@ func TestGetConfig(t *testing.T) {
 					Namespace:  "harbor.scanner.clair:store",
 					ScanJobTTL: parseDuration(t, "1h"),
 				},
-				RedisPool: RedisPool{
-					URL:               "redis://harbor-harbor-redis:6379",
-					MaxActive:         3,
-					MaxIdle:           10,
-					IdleTimeout:       parseDuration(t, "5m"),
-					ConnectionTimeout: parseDuration(t, "1s"),
-					ReadTimeout:       parseDuration(t, "1s"),
-					WriteTimeout:      parseDuration(t, "1s"),
+				RedisClient: RedisClient{
+					URL:                "redis://harbor-harbor-redis:6379",
+					IdleTimeout:        parseDuration(t, "5m"),
+					ConnectionTimeout:  parseDuration(t, "1s"),
+					MaxRetries:         3,
+					MaxConnAge:         parseDuration(t, "60s"),
+					IdleCheckFrequency: parseDuration(t, "20s"),
 				},
 			},
 		},
@@ -141,7 +139,7 @@ func TestGetConfig(t *testing.T) {
 			assert.Equal(t, tc.expectedConfig.API, cfg.API)
 			assert.Equal(t, tc.expectedConfig.Clair, cfg.Clair)
 			assert.Equal(t, tc.expectedConfig.RedisStore, cfg.RedisStore)
-			assert.Equal(t, tc.expectedConfig.RedisPool, cfg.RedisPool)
+			assert.Equal(t, tc.expectedConfig.RedisClient, cfg.RedisClient)
 		})
 	}
 

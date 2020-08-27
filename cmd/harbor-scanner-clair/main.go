@@ -45,7 +45,7 @@ func run() (err error) {
 		return
 	}
 
-	pool, err := redisx.NewPool(config.RedisPool)
+	pool, err := redisx.NewPool(config.RedisClient)
 	if err != nil {
 		err = fmt.Errorf("constructing connection pool: %v", err)
 		return

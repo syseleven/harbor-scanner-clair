@@ -3,32 +3,29 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-redis/redis/v7"
 
 	"github.com/goharbor/harbor-scanner-clair/pkg/etc"
 	"github.com/goharbor/harbor-scanner-clair/pkg/harbor"
 	"github.com/goharbor/harbor-scanner-clair/pkg/job"
 	"github.com/goharbor/harbor-scanner-clair/pkg/persistence"
-	"github.com/gomodule/redigo/redis"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 )
 
 type store struct {
-	pool *redis.Pool
+	client *redis.Client
 	cfg  etc.RedisStore
 }
 
-func NewStore(pool *redis.Pool, cfg etc.RedisStore) persistence.Store {
+func NewStore(client *redis.Client, cfg etc.RedisStore) persistence.Store {
 	return &store{
 		cfg:  cfg,
-		pool: pool,
+		client: client,
 	}
 }
 
 func (s *store) Create(scanJob job.ScanJob) error {
-	conn := s.pool.Get()
-	defer s.close(conn)
-
 	bytes, err := json.Marshal(scanJob)
 	if err != nil {
 		return xerrors.Errorf("marshalling scan job: %w", err)
@@ -43,7 +40,7 @@ func (s *store) Create(scanJob job.ScanJob) error {
 		"expire":          s.cfg.ScanJobTTL.Seconds(),
 	}).Trace("Creating scan job")
 
-	_, err = conn.Do("SET", key, string(bytes), "NX", "EX", int(s.cfg.ScanJobTTL.Seconds()))
+	_, err = s.client.SetNX(key, string(bytes), s.cfg.ScanJobTTL).Result()
 	if err != nil {
 		return xerrors.Errorf("creating scan job: %w", err)
 	}
@@ -52,9 +49,6 @@ func (s *store) Create(scanJob job.ScanJob) error {
 }
 
 func (s *store) update(scanJob job.ScanJob) error {
-	conn := s.pool.Get()
-	defer s.close(conn)
-
 	bytes, err := json.Marshal(scanJob)
 	if err != nil {
 		return xerrors.Errorf("marshalling scan job: %w", err)
@@ -69,7 +63,7 @@ func (s *store) update(scanJob job.ScanJob) error {
 		"expire":          s.cfg.ScanJobTTL.Seconds(),
 	}).Debug("Updating scan job")
 
-	_, err = conn.Do("SET", key, string(bytes), "XX", "EX", int(s.cfg.ScanJobTTL.Seconds()))
+	_, err = s.client.SetXX(key, string(bytes), s.cfg.ScanJobTTL).Result()
 	if err != nil {
 		return xerrors.Errorf("updating scan job: %w", err)
 	}
@@ -78,13 +72,10 @@ func (s *store) update(scanJob job.ScanJob) error {
 }
 
 func (s *store) Get(scanJobID string) (*job.ScanJob, error) {
-	conn := s.pool.Get()
-	defer s.close(conn)
-
 	key := s.getKeyForScanJob(scanJobID)
-	value, err := redis.String(conn.Do("GET", key))
+	value, err := s.client.Get(key).Result()
 	if err != nil {
-		if err == redis.ErrNil {
+		if err == redis.Nil {
 			return nil, nil
 		}
 		return nil, err
@@ -136,9 +127,3 @@ func (s *store) getKeyForScanJob(scanJobID string) string {
 	return fmt.Sprintf("%s:scan-job:%s", s.cfg.Namespace, scanJobID)
 }
 
-func (s *store) close(conn redis.Conn) {
-	err := conn.Close()
-	if err != nil {
-		log.WithError(err).Error("Error while closing connection")
-	}
-}

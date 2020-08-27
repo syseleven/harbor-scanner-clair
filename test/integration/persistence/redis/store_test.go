@@ -41,10 +41,8 @@ func TestStore(t *testing.T) {
 
 	redisURL := getRedisURL(t, ctx, redisC)
 
-	pool, err := redisx.NewPool(etc.RedisPool{
+	pool, err := redisx.NewPool(etc.RedisClient{
 		URL:       redisURL,
-		MaxActive: 5,
-		MaxIdle:   5,
 	})
 	require.NoError(t, err, "getting redis pool should not fail")
 
